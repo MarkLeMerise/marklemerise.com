@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { flagFor } from './lib/flags.js';
 import { groupLabel, stageLabel } from './lib/stages.js';
 import { venueLocation } from './lib/venues.js';
+import { VENUE_BY_ID } from './lib/venues-by-id.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ICS_PATH = join(HERE, 'calendar.ics');
@@ -129,7 +130,9 @@ function buildEvent(match, sequences, dtstamp) {
   const dtEnd = easternStamp(end);
 
   const summary = buildSummary(match);
-  const location = venueLocation(match.venue);
+  // The free API tier returns no venue, so prefer the static schedule map;
+  // fall back to the API venue (if it ever populates), then nothing.
+  const location = VENUE_BY_ID[match.id] || venueLocation(match.venue);
   const uid = `wc2026-match-${match.id}@${DOMAIN}`;
 
   // Bump SEQUENCE only when visible content changes, so clients update the

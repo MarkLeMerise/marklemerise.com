@@ -12,8 +12,12 @@ groups resolve) by an hourly GitHub Action.
   API (competition `WC`) and writes `calendar.ics` (RFC 5545) plus
   `data/sequences.json` (tracks per-event `SEQUENCE` so clients update events
   in place instead of duplicating).
-- `lib/` holds the static maps: team → flag emoji, venue → "City, State,
-  Country", and API stage → label.
+- `lib/` holds the static maps: team → flag emoji, API stage → label, and
+  venues. The free API tier returns no venue, so `lib/venues-by-id.js` maps
+  each match ID to "City, State, Country" (sourced from the official schedule
+  via the public-domain [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json)
+  dataset); `lib/venues.js` is a stadium-name fallback if the API ever
+  populates `venue`.
 - `.github/workflows/update-worldcup.yml` runs the script hourly and commits
   the regenerated feed straight to the default branch (where GitHub Pages
   serves from). No per-run involvement needed.
