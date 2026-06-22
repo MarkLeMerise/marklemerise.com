@@ -123,7 +123,7 @@ function buildSummary(match) {
   return summary;
 }
 
-function buildEvent(match, sequences, dtstamp) {
+function buildEvent(match, sequences, now) {
   const start = new Date(match.utcDate);
   const end = new Date(start.getTime() + MATCH_DURATION_MIN * 60000);
   const dtStart = easternStamp(start);
@@ -137,13 +137,17 @@ function buildEvent(match, sequences, dtstamp) {
 
   // Bump SEQUENCE only when visible content changes, so clients update the
   // existing event in place (UID match + higher SEQUENCE) without duplicating.
+  // DTSTAMP is likewise frozen until content changes — otherwise it would
+  // churn every run, making the feed differ each time and committing hourly
+  // even when nothing actually changed.
   const hash = createHash('sha1')
     .update(`${summary}|${location}|${dtStart}|${dtEnd}`)
     .digest('hex');
   const prev = sequences[uid];
-  let seq = prev ? prev.seq : 0;
-  if (prev && prev.hash !== hash) seq += 1;
-  sequences[uid] = { seq, hash };
+  const changed = !prev || prev.hash !== hash;
+  const seq = prev ? prev.seq + (changed ? 1 : 0) : 0;
+  const dtstamp = changed ? now : prev.dtstamp;
+  sequences[uid] = { seq, hash, dtstamp };
 
   const lines = [
     'BEGIN:VEVENT',
@@ -185,7 +189,7 @@ const VTIMEZONE = [
 ];
 
 function buildCalendar(matches, sequences) {
-  const dtstamp = utcStamp(new Date());
+  const now = utcStamp(new Date());
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -203,7 +207,7 @@ function buildCalendar(matches, sequences) {
     (a, b) => new Date(a.utcDate) - new Date(b.utcDate),
   );
   for (const match of sorted) {
-    lines.push(...buildEvent(match, sequences, dtstamp));
+    lines.push(...buildEvent(match, sequences, now));
   }
   lines.push('END:VCALENDAR');
 
