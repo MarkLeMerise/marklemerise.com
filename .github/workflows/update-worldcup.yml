@@ -2,9 +2,9 @@ name: Update World Cup 2026 calendar
 
 on:
   schedule:
-    # Hourly, at :17 — GitHub heavily contends/drops schedules at the top of
-    # the hour, so an off-peak minute fires far more reliably.
-    - cron: '17 * * * *'
+    # Every 2 hours at :37 — off-peak minute (GitHub contends/drops schedules
+    # at the top of the hour). Plenty fresh for a calendar clients poll slowly.
+    - cron: '37 */2 * * *'
   workflow_dispatch: {}
 
 permissions:
