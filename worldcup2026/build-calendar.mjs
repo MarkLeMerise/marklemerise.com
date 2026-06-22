@@ -159,9 +159,10 @@ function buildEvent(match, sequences, now) {
     `SUMMARY:${escapeText(summary)}`,
   ];
   if (location) lines.push(`LOCATION:${escapeText(location)}`);
-  if (match.lastUpdated) {
-    lines.push(`LAST-MODIFIED:${utcStamp(new Date(match.lastUpdated))}`);
-  }
+  // LAST-MODIFIED tracks our content-revision time (same as DTSTAMP), not the
+  // API's match.lastUpdated — the latter is bumped in bulk across nearly all
+  // matches between polls, which would churn the file and commit every run.
+  lines.push(`LAST-MODIFIED:${dtstamp}`);
   lines.push('END:VEVENT');
   return lines;
 }
