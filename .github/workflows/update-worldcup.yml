@@ -1,0 +1,51 @@
+name: Update World Cup 2026 calendar
+
+on:
+  schedule:
+    - cron: '0 * * * *' # hourly
+  workflow_dispatch: {}
+
+permissions:
+  contents: write # commit the regenerated feed back to the repo
+
+# Avoid overlapping runs racing on the same commit.
+concurrency:
+  group: update-worldcup
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate calendar
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+        run: node worldcup2026/build-calendar.mjs
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- worldcup2026/calendar.ics worldcup2026/data/sequences.json; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git add worldcup2026/calendar.ics worldcup2026/data/sequences.json
+          git commit -m "Update World Cup 2026 calendar"
+          for delay in 0 2 4 8 16; do
+            if [ "$delay" -ne 0 ]; then sleep "$delay"; fi
+            if git push; then
+              echo "Pushed."
+              exit 0
+            fi
+            echo "Push failed; retrying..."
+            git pull --rebase
+          done
+          echo "Push failed after retries." >&2
+          exit 1
