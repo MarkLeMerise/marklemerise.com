@@ -1,10 +1,8 @@
 name: Update World Cup 2026 calendar
 
 on:
-  schedule:
-    # Hourly, at :17 — GitHub heavily contends/drops schedules at the top of
-    # the hour, so an off-peak minute fires far more reliably.
-    - cron: '17 * * * *'
+  # Scheduled updates were disabled after the 2026 tournament ended.
+  # Run manually from the Actions tab if the feed ever needs refreshing.
   workflow_dispatch: {}
 
 permissions:
